@@ -12,22 +12,19 @@ struct call {
 };
 
 struct reactor {
-    struct call *first;
-    struct call *last;
-    int max_call_id;
+    struct call *callbacks[MAX_CALLBACKS];
+    int next_id;
 };
 
 struct cell {
     int value;
     struct reactor *reactor;
-    void (*update)(struct cell *);
-    struct cell **inputs;
-    void *func;
-    int n_inputs;
+    callback_id callback_id;
 };
 
 struct reactor *create_reactor() {
     return calloc(sizeof(struct reactor), 1);
+
 }
 
 struct cell *create_input_cell(struct reactor *r, int initial_value) {
@@ -38,48 +35,44 @@ struct cell *create_input_cell(struct reactor *r, int initial_value) {
     return c;
 }
 
+struct compute1_data { compute1 func; struct cell *input; struct cell *output; };
+
 void compute1_callback(void *data, int id) {
-    DEBUG(printf("Updating compute1 cell: %d\n", id));
-    struct cell *cell = (struct cell *)data;
-    compute1 func = (int (*)(int))cell->func;
-    int input = get_cell_value(cell->inputs[0]);
-    set_cell_value(cell, func(input));
+    if(id) {}
+    struct compute1_data *state = (struct compute1_data *)data;
+    DEBUG(printf("Updating compute1 cell: %p\n", (void *)state->output));
+    set_cell_value(state->output, state->func(get_cell_value(state->input)));
 }
 
 struct cell *create_compute1_cell(struct reactor *r, struct cell *input,
         compute1 func) {
     struct cell *cell = calloc(sizeof(struct cell),1);
-    cell->func = (void *)func;
+    DEBUG(printf("Creating compute1 cell: %p\n", (void *)cell));
     cell->reactor = r;
-
-    cell->inputs = calloc(sizeof(struct cell *), 1);
-    cell->inputs[0] = input;
-
-    add_callback(cell, (void *)cell, compute1_callback);
-
+    struct compute1_data data = { .func = func, .input = input, .output = cell };
+    cell->callback_id = add_callback(cell, &data, compute1_callback);
     return cell;
 }
 
+struct compute2_data { compute2 func; struct cell *input1; struct cell *input2;
+    struct cell *output; };
+
 void compute2_callback(void *data, int id) {
-    DEBUG(printf("Updating compute1 cell: %d\n", id));
-    struct cell *cell = (struct cell *)data;
-    compute2 func = (int (*)(int, int))cell->func;
-    int input1 = get_cell_value(cell->inputs[0]);
-    int input2 = get_cell_value(cell->inputs[1]);
-    set_cell_value(cell, func(input1, input2));
+    if(id) {}
+    struct compute2_data *state = (struct compute2_data *)data;
+    DEBUG(printf("Updating compute2 cell: %p\n", (void *)state->output));
+    set_cell_value(state->output, state->func(
+                get_cell_value(state->input1), get_cell_value(state->input2)));
 }
 
 struct cell *create_compute2_cell(struct reactor *r, struct cell *input1,
         struct cell *input2, compute2 func) {
     struct cell *cell = calloc(sizeof(struct cell), 1);
+    DEBUG(printf("Creating compute2 cell: %p\n", (void *)cell));
     cell->reactor = r;
-    cell->func = (void *)func;
-
-    cell->inputs = calloc(sizeof(struct cell *), 2);
-    cell->inputs[0] = input1;
-    cell->inputs[1] = input2;
-
-    add_callback(cell, (void *)cell, compute2_callback);
+    struct compute2_data data = { .func = func, .output = cell,
+        .input1 = input1, .input2 = input2 };
+    cell->callback_id = add_callback(cell, &data, compute2_callback);
     return cell;
 }
 
@@ -90,14 +83,7 @@ int get_cell_value(struct cell *c) {
 
 void set_cell_value(struct cell *c, int new_value) {
     DEBUG(printf("Setting cell value %p\n", (void *)c));
-    struct reactor *r = c->reactor;
     c->value = new_value;
-    for(struct call *d = r->first; d != NULL; d = d->next) {
-        if(d->id == (int)c) {
-            DEBUG(printf("Callback on %p\n", (void *)c));
-            d->callback(d->args, d->id);
-        }
-    }
 }
 
 void destroy_reactor(struct reactor *r) {
@@ -106,16 +92,10 @@ void destroy_reactor(struct reactor *r) {
 
 callback_id add_callback(struct cell *c, void *args, callback func) {
     struct call *call = malloc(sizeof(call));
-    call->id = (int)c;
+    call->id = c->reactor->next_id++;
     call->callback = func;
     call->args = args; 
-    if(c->reactor->first == NULL) {
-        c->reactor->first = call;
-        c->reactor->last = call;
-    } else {
-        c->reactor->last->next = call;
-        c->reactor->last = call;
-    }
+    c->reactor->callbacks[call->id] = call;
     return call->id;
 }
 
