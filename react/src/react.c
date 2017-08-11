@@ -2,78 +2,57 @@
 #include <stdlib.h>
 #include <stdio.h>
 #define DEBUG(x) x
-#define MAX_CALLBACKS 10
-
-struct call {
-    int id;
-    void *args;
-    callback callback;
-    struct call *next;
-};
+#define CELL_ALLOC 10
 
 struct reactor {
-    struct call *callbacks[MAX_CALLBACKS];
-    int next_id;
+    struct cell **cells;
+    int n_cells;
 };
 
 struct cell {
     int value;
-    struct reactor *reactor;
-    callback_id callback_id;
 };
 
 struct reactor *create_reactor() {
-    return calloc(sizeof(struct reactor), 1);
-
+    struct reactor *r = calloc(sizeof(struct reactor), 1);
+    DEBUG(printf("Creating reactor %p\n", (void *)r));
+    r->cells = calloc(sizeof(struct cell *), CELL_ALLOC);
+    return r;
 }
 
 struct cell *create_input_cell(struct reactor *r, int initial_value) {
     struct cell *c = calloc(sizeof(struct cell), 1);
-    c->reactor = r;
-    DEBUG(printf("Created cell %p\n", (void *)c));
+    DEBUG(printf("Creating input cell %p\n", (void *)c));
+    r->cells[r->n_cells++] = c;
     set_cell_value(c, initial_value);
     return c;
 }
 
-struct compute1_data { compute1 func; struct cell *input; struct cell *output; };
-
-void compute1_callback(void *data, int id) {
-    if(id) {}
-    struct compute1_data *state = (struct compute1_data *)data;
-    DEBUG(printf("Updating compute1 cell: %p\n", (void *)state->output));
-    set_cell_value(state->output, state->func(get_cell_value(state->input)));
+void compute1_callback(void *data, int value) {
+    struct cell *c = (struct cell *)data;
+    set_cell_value(c, value);
 }
 
 struct cell *create_compute1_cell(struct reactor *r, struct cell *input,
         compute1 func) {
-    struct cell *cell = calloc(sizeof(struct cell),1);
-    DEBUG(printf("Creating compute1 cell: %p\n", (void *)cell));
-    cell->reactor = r;
-    struct compute1_data data = { .func = func, .input = input, .output = cell };
-    cell->callback_id = add_callback(cell, &data, compute1_callback);
-    return cell;
+    struct cell *c = create_input_cell(r, func(get_cell_value(input)));
+    DEBUG(printf("Creating compute1 cell %p\n", (void *)c));
+    add_callback(c, &c, compute1_callback);
+    return c;
 }
 
-struct compute2_data { compute2 func; struct cell *input1; struct cell *input2;
-    struct cell *output; };
-
-void compute2_callback(void *data, int id) {
-    if(id) {}
-    struct compute2_data *state = (struct compute2_data *)data;
-    DEBUG(printf("Updating compute2 cell: %p\n", (void *)state->output));
-    set_cell_value(state->output, state->func(
-                get_cell_value(state->input1), get_cell_value(state->input2)));
+void compute2_callback(void *data, int value) {
+    struct cell *c = (struct cell *)data;
+    set_cell_value(c, value);
 }
 
 struct cell *create_compute2_cell(struct reactor *r, struct cell *input1,
         struct cell *input2, compute2 func) {
-    struct cell *cell = calloc(sizeof(struct cell), 1);
-    DEBUG(printf("Creating compute2 cell: %p\n", (void *)cell));
-    cell->reactor = r;
-    struct compute2_data data = { .func = func, .output = cell,
-        .input1 = input1, .input2 = input2 };
-    cell->callback_id = add_callback(cell, &data, compute2_callback);
-    return cell;
+    struct cell *c = create_input_cell(r, func(get_cell_value(input1),
+                get_cell_value(input2)));
+    DEBUG(printf("Creating compute1 cell %p\n", (void *)c));
+    add_callback(c, &c, compute2_callback);
+    return c;
 }
 
 int get_cell_value(struct cell *c) {
@@ -87,16 +66,14 @@ void set_cell_value(struct cell *c, int new_value) {
 }
 
 void destroy_reactor(struct reactor *r) {
+    for(int i = 0; i < r->n_cells; i++)
+        free(r->cells[i]);
     free(r);
 }
 
 callback_id add_callback(struct cell *c, void *args, callback func) {
-    struct call *call = malloc(sizeof(call));
-    call->id = c->reactor->next_id++;
-    call->callback = func;
-    call->args = args; 
-    c->reactor->callbacks[call->id] = call;
-    return call->id;
+    if(c && args && func) {}
+    return 0;
 }
 
 void remove_callback(struct cell *c, callback_id id) {
