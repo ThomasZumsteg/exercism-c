@@ -1,7 +1,13 @@
 #include "react.h"
 #include <stdlib.h>
 #include <stdio.h>
-#define DEBUG(x) x
+#define DEBUG(x)
+
+enum state {
+    set = 0,
+    changed,
+    uninitilized,
+};
 
 struct reactor {
     struct cell *cells;
@@ -10,8 +16,6 @@ struct reactor {
 struct cell {
     int value;
     struct cell *next;
-    int (* update)(void *inputs);
-    void *inputs;
     callback_id ids;
     struct callback_data *callbacks;
 };
@@ -23,40 +27,30 @@ struct reactor *create_reactor() {
     return r;
 }
 
-int update_input(void *data) { return ((struct cell *)data)->value; }
-
-struct cell *create_cell(struct reactor *r, int (*update)(void *), void *inputs) {
+struct cell *create_cell(struct reactor *r, int value) {
     struct cell *c = malloc(sizeof(struct cell));
     c->next = r->cells;
     r->cells = c;
+    c->value = value;
     c->callbacks = NULL;
     c->ids = 0;
-    if(update == NULL && inputs == NULL) {
-        c->update = update_input;
-        c->inputs = c;
-    } else {
-        c->update = update;
-        c->inputs = inputs;
-    }
     return c;
 }
 
 struct cell *create_input_cell(struct reactor *r, int initial_value) {
     DEBUG(printf("Creating input cell\n"));
-    struct cell *c = create_cell(r, NULL, NULL);
-    set_cell_value(c, initial_value);
-    return c;
+    return create_cell(r, initial_value);
 }
 
 struct compute1_data { 
     compute1 func;
-    struct cell *input;
+    struct cell *output;
 };
 
-int update_compute1(void *data) {
+void update_compute1(void *data, int value) {
     DEBUG(printf("Compute 1 update\n"));
     struct compute1_data *cp1_data = (struct compute1_data *)data;
-    return cp1_data->func(get_cell_value(cp1_data->input));
+    set_cell_value(cp1_data->output, cp1_data->func(value));
 }
 
 struct cell *create_compute1_cell(struct reactor *r, struct cell *input,
@@ -64,38 +58,54 @@ struct cell *create_compute1_cell(struct reactor *r, struct cell *input,
     DEBUG(printf("Creating compute1 cell \n"));
     struct compute1_data *data = malloc(sizeof(struct compute1_data));
     data->func = func;
-    data->input = input;
-    return create_cell(r, update_compute1, data);
+    data->output = create_cell(r, func(get_cell_value(input)));
+    add_callback(input, data, update_compute1);
+    return data->output;;
 }
 
 struct compute2_data {
     compute2 func;
-    struct cell *input1;
-    struct cell *input2;
+    struct cell *input;
+    struct cell *output;
+    int left;
 };
 
-int update_compute2(void *data) {
+void update_compute2(void *data, int value) {
     DEBUG(printf("Compute 2 update\n"));
     struct compute2_data *d = (struct compute2_data *)data;
-    return d->func(get_cell_value(d->input1), get_cell_value(d->input2));
+    int right = get_cell_value(d->input);
+    int left  = value;
+    if(d->left != 0) {
+        right = left;
+        left = value;
+    }
+    set_cell_value(d->output, d->func(left, right)); 
 }
 
 struct cell *create_compute2_cell(struct reactor *r, struct cell *input1,
         struct cell *input2, compute2 func) {
     DEBUG(printf("Creating compute2 cell\n"));
-    struct compute2_data *data = malloc(sizeof(struct compute2_data));
-    data->func = func;
-    data->input1 = input1;
-    data->input2 = input2;
+    struct cell *c = create_cell(r, 
+            func(get_cell_value(input1), get_cell_value(input2)));
+    struct compute2_data *left = malloc(sizeof(struct compute2_data));
+    left->func = func;
+    left->input = input2;
+    left->output = c;
+    left->left = 1;
+    add_callback(input1, left, update_compute2);
 
-    return create_cell(r, update_compute2, data);
+    struct compute2_data *right = malloc(sizeof(struct compute2_data));
+    right->func = func;
+    right->input = input1;
+    right->output = c;
+    right->left = 0;
+    add_callback(input2, right, update_compute2);
+
+    return c;
 }
 
 int get_cell_value(struct cell *c) {
     DEBUG(printf("Getting cell value %p\n", (void *)c));
-    int new_value = c->update(c->inputs);
-    if(new_value != c->value)
-        set_cell_value(c, new_value);
     return c->value;
 }
 
