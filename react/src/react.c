@@ -1,13 +1,7 @@
 #include "react.h"
 #include <stdlib.h>
 #include <stdio.h>
-#define DEBUG(x)
-
-enum state {
-    set = 0,
-    changed,
-    uninitilized,
-};
+#define DEBUG(x) x
 
 struct reactor {
     struct cell *cells;
@@ -76,8 +70,8 @@ void update_compute2(void *data, int value) {
     int right = get_cell_value(d->input);
     int left  = value;
     if(d->left != 0) {
-        right = left;
-        left = value;
+        left = right;
+        right = value;
     }
     set_cell_value(d->output, d->func(left, right)); 
 }
