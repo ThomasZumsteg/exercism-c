@@ -75,7 +75,6 @@ void test_one_hundred_twenty_three(void)
 
 void test_one_thousand(void)
 {
-   TEST_IGNORE();
    char *ans = NULL;
    int res = say(1000, &ans);
    TEST_ASSERT_EQUAL_INT(0, res);
@@ -85,7 +84,6 @@ void test_one_thousand(void)
 
 void test_one_thousand_two_hundred_thirty_four(void)
 {
-   TEST_IGNORE();
    char *ans = NULL;
    int res = say(1234, &ans);
    TEST_ASSERT_EQUAL_INT(0, res);
@@ -95,7 +93,6 @@ void test_one_thousand_two_hundred_thirty_four(void)
 
 void test_one_million(void)
 {
-   TEST_IGNORE();
    char *ans = NULL;
    int res = say(1000000, &ans);
    TEST_ASSERT_EQUAL_INT(0, res);
@@ -105,7 +102,6 @@ void test_one_million(void)
 
 void test_one_million_two_thousand_three_hundred_forty_five(void)
 {
-   TEST_IGNORE();
    char *ans = NULL;
    int res = say(1002345, &ans);
    TEST_ASSERT_EQUAL_INT(0, res);
@@ -116,7 +112,6 @@ void test_one_million_two_thousand_three_hundred_forty_five(void)
 
 void test_one_billion(void)
 {
-   TEST_IGNORE();
    char *ans = NULL;
    int res = say(1000000000, &ans);
    TEST_ASSERT_EQUAL_INT(0, res);
@@ -126,7 +121,6 @@ void test_one_billion(void)
 
 void test_a_big_number(void)
 {
-   TEST_IGNORE();
    char *ans = NULL;
    int res = say(987654321123, &ans);
    TEST_ASSERT_EQUAL_INT(0, res);
@@ -138,7 +132,6 @@ void test_a_big_number(void)
 
 void test_numbers_below_zero_are_out_of_range(void)
 {
-   TEST_IGNORE();
    char *ans = NULL;
    int res = say(-1, &ans);
    TEST_ASSERT_EQUAL_INT(-1, res);
@@ -147,7 +140,6 @@ void test_numbers_below_zero_are_out_of_range(void)
 
 void test_numbers_above_999_999_999_999_are_out_of_range(void)
 {
-   TEST_IGNORE();
    char *ans = NULL;
    int res = say(1000000000000, &ans);
    TEST_ASSERT_EQUAL_INT(-1, res);
