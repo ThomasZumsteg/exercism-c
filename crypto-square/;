@@ -1,0 +1,37 @@
+#include "crypto_square.h"
+#include <stdio.h>
+#include <strings.h>
+#include <stdlib.h>
+#include <math.h>
+
+char *clean(const char *text) {
+    char *result = calloc(sizeof(char), strlen(text));
+    char *p_result = result;
+    for(const char *c = text; *c; c++) {
+        char tmp = *c;
+        if('A' <= tmp && tmp <= 'Z')
+            tmp += 'a' - 'A';
+        if(('a' <= tmp && tmp <= 'z') || ('0' <= tmp && tmp <= '9')) {
+            *p_result = tmp;
+            p_result++;
+        }
+    }
+    return result;
+}
+
+char *ciphertext(const char *plaintext) {
+    char *cleaned = clean(plaintext);
+    int len = (int)sqrt(strlen(cleaned)+1);
+    char *result = calloc(sizeof(char), len*(len+1));
+    int line = 0;
+    int column = 0;
+
+    for(char *c = cleaned; *c; c++) {
+        result[(line++ * len) + column] = *c;
+        if(line > len) {
+            line = 0
+        }
+
+    }
+    return cleaned;
+}
