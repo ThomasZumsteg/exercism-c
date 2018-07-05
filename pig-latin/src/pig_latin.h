@@ -1,0 +1,1 @@
+char *translate(const char *);
