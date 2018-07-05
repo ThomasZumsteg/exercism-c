@@ -180,7 +180,6 @@ void test_y_as_second_letter_in_two_letter_word(void)
 
 void test_a_whole_phrase(void)
 {
-   TEST_IGNORE();
    const char *phrase = "quick fast run";
    char *res = translate(phrase);
    TEST_ASSERT_EQUAL_STRING("ickquay astfay unray", res);

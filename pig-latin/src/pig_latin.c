@@ -43,7 +43,19 @@ char *translate_word(const char *input) {
 
 char *translate(const char *input) {
     char *result = calloc(sizeof(char), MAX_LEN);
-    strcat(result, translate_word(input));
+    char *end = strchr(input, ' ');
+    char *start = (char *)input;
+    for(; end; end = strchr(end+1, ' ')) {
+        char *tmp = calloc(sizeof(char), MAX_LEN);
+        strncpy(tmp, start, end - start);
+        if(start != input)
+            strcat(result, " ");
+        strcat(result, translate_word(tmp));
+        start = end+1;
+    }
+    if(start != input)
+        strcat(result, " ");
+    strcat(result, translate_word(start));
     return result;
 }
 
