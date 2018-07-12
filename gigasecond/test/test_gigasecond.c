@@ -1,5 +1,6 @@
 #include "vendor/unity.h"
 #include "../src/gigasecond.h"
+#define DEBUG 1
 
 // Constructs a time_t type from the given date settings
 time_t construct_date(int year, int month, int day, int hour, int min, int sec)
@@ -19,6 +20,9 @@ void test_date(void)
 {
    time_t expected = construct_date(2043, 1, 1, 1, 46, 40);
    time_t actual = gigasecond_after(construct_date(2011, 4, 25, 0, 0, 0));
+#if DEBUG
+   printf("Expected: %li\nActual  : %li\n", expected, actual);
+#endif
    TEST_ASSERT(expected == actual);
 }
 
@@ -26,6 +30,9 @@ void test_another_date(void)
 {
    time_t expected = construct_date(2009, 2, 19, 1, 46, 40);
    time_t actual = gigasecond_after(construct_date(1977, 6, 13, 0, 0, 0));
+#if DEBUG
+   printf("Expected: %li\nActual  : %li\n", expected, actual);
+#endif
    TEST_ASSERT(expected == actual);
 }
 
@@ -33,6 +40,9 @@ void test_third_date(void)
 {
    time_t expected = construct_date(1991, 3, 27, 1, 46, 40);
    time_t actual = gigasecond_after(construct_date(1959, 7, 19, 0, 0, 0));
+#if DEBUG
+   printf("Expected: %li\nActual  : %li\n", expected, actual);
+#endif
    TEST_ASSERT(expected == actual);
 }
 
@@ -40,6 +50,9 @@ void test_date_and_time(void)
 {
    time_t expected = construct_date(2046, 10, 2, 23, 46, 40);
    time_t actual = gigasecond_after(construct_date(2015, 1, 24, 22, 0, 0));
+#if DEBUG
+   printf("Expected: %li\nActual  : %li\n", expected, actual);
+#endif
    TEST_ASSERT(expected == actual);
 }
 
@@ -47,6 +60,9 @@ void test_date_and_time_with_day_rollover(void)
 {
    time_t expected = construct_date(2046, 10, 3, 1, 46, 39);
    time_t actual = gigasecond_after(construct_date(2015, 1, 24, 23, 59, 59));
+#if DEBUG
+   printf("Expected: %li\nActual  : %li\n", expected, actual);
+#endif
    TEST_ASSERT(expected == actual);
 }
 
@@ -62,6 +78,10 @@ void test_your_birthday(void)
 int main(void)
 {
    UnityBegin("test/test_gigasecond.c");
+
+#if DEBUG
+   printf("time_t: %li\n", sizeof(time_t));
+#endif
 
    RUN_TEST(test_date);
    RUN_TEST(test_another_date);
