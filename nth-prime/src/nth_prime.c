@@ -25,6 +25,8 @@ uint32_t nth(int n) {
             primes[n_primes++] = p;
 
     }
-    return primes[n-1];
+    uint32_t result = primes[n-1];
+    free(primes);
+    return result;
 }
 
