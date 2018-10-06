@@ -45,8 +45,10 @@ int unshift(struct list_item** list, ll_data_t data) {
 
 ll_data_t pop(struct list_item** list) {
   struct list_item *item = (*list);
+  *list = item->next;
+  (*list)->prev = item->prev;
+  (*list)->prev->next = *list;
   ll_data_t data = item->data;
-  *list = (*list)->next;
   free(item);
   return data;
 }
@@ -54,7 +56,5 @@ ll_data_t pop(struct list_item** list) {
 ll_data_t shift(struct list_item** list) {
     *list = (*list)->prev;
     ll_data_t data = pop(list);
-    printf("%d\n", data);
-    *list = (*list)->prev;
     return data;
 }
